@@ -2,12 +2,11 @@ CC = c++
 
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC_FILES = main\
-	Request\
-	Response\
-	Server
+SRC_FILES = Server Log
 
 SRC_DIR = ./src/
+
+OBJ_DIR = ./obj/
 
 SRC = $(addprefix $(SRC_DIR), $(addsuffix .cpp, $(SRC_FILES)))
 

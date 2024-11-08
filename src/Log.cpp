@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 13:55:15 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/07 14:39:58 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/08 16:29:24 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,18 @@
 LogState	Log::state = ON;
 LogMode		Log::mode = CONSOLE;
 
-std::map<LogLevel, std::string> Log::levelStr =
+std::map<LogLevel, std::string> Log::levelStr;
+
+Log::Log()
 {
-	{DEBUG, "[DEBUG]  "},
-	{INFO, "[INFO]   "},
-	{ERROR, "[ERROR]  "},
-};
+	levelStr[DEBUG] = "DEBUG  ";
+	levelStr[INFO] = "INFO   ";
+	levelStr[ERROR] = "ERROR  ";
+}
+
+Log::~Log()
+{
+}
 
 std::string	Log::GetCurrTime()
 {
@@ -54,5 +60,5 @@ void	Log::SetMode(std::string mode)
 	if (mode == "CONSOLE")
 		Log::mode = CONSOLE;
 	else if (mode == "FILE")
-		Log::mode = FILE;
+		Log::mode = OUTFILE;
 }

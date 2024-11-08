@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 13:44:05 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/07 14:38:58 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/08 16:14:13 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ enum LogLevel
 enum LogMode
 {
 	CONSOLE,
-	FILE,
+	OUTFILE,
 };
 
 class Log
@@ -43,6 +43,8 @@ class Log
 		static LogMode	mode;
 		static std::map<LogLevel, std::string> levelStr;
 
+		Log();
+		~Log();
 		static std::string	GetCurrTime();
 		static void		LogMsg(LogLevel level, std::string msg);
 		static void		SetState(std::string state);
