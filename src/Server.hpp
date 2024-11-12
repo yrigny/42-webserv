@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:43 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/08 17:33:02 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/12 20:15:26 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,10 @@
 # include <iostream>
 # include <ostream>
 # include <netinet/in.h> // sockaddr_in
-# include <arpa/inet.h> // inet_addr
+# include <arpa/inet.h> // inet_addr, inet_ntoa
 # include <cstring> // memset
 # include <unistd.h> // close
+# include <fcntl.h> // fcntl
 # include <cstdlib> // exit, strtol
 # include <string> // stoi
 # include <vector>
@@ -66,6 +67,7 @@ class Server
 		// void	SetCgiExtensions(std::string cgiExtensions);
 		uint16_t					GetPort() const;
 		in_addr_t					GetHost() const;
+		std::string					GetHostStr() const;
 		std::string					GetServerName() const;
 		std::string					GetRoot() const;
 		std::vector<std::string>	GetIndexes() const;
@@ -77,14 +79,15 @@ class Server
 		std::string					GetUploadPath() const;
 		int							GetListenFd() const;
 		struct sockaddr_in			GetSockAddr() const;
+		int							GetConnFd() const;
 		
-		void	InitSocket();
+		void	CreateSocket();
 		void	SetSockAddr();
 		void	SetReuseAddr();
 		void	SetBind();
-		void	InitServer();
-		void	EventListen();
-		void	EventLoop();
+		void	SetNonBlocking();
+		void	SetListen();
+		void	SetClientConnection(int connFd);
 
 	private:
 		uint16_t					_port;
@@ -103,6 +106,7 @@ class Server
 		// std::vector<std::string>	_cgiExtensions;
 		int 						_listenFd;
 		struct sockaddr_in			_sockAddr;
+		int 						_connFd;
 };
 
 std::ostream &operator<<(std::ostream &o, Server const &i);

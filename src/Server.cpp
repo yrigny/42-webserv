@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/08 17:34:59 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/12 20:33:07 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,13 @@ Server::Server()
 	SetMaxBodySize("4096");
 	SetErrorPages("404 /_default/404.html");
 	SetUploadPath("upload/files/");
-	InitSocket();
+	CreateSocket();
 	SetSockAddr();
 	SetReuseAddr();
+	SetNonBlocking();
 	SetBind();
+	SetListen();
+	SetClientConnection(-1);
 }
 
 Server::~Server()
@@ -148,7 +151,7 @@ void	Server::SetUploadPath(std::string uploadPath)
 	_uploadPath = uploadPath;
 }
 
-void	Server::InitSocket()
+void	Server::CreateSocket()
 {
 	_listenFd = socket(PF_INET, SOCK_STREAM, 0);
 	if (_listenFd == -1)
@@ -187,6 +190,33 @@ void	Server::SetBind()
 	}
 }
 
+void	Server::SetNonBlocking()
+{
+    int old_option = fcntl(_listenFd, F_GETFL);
+    int new_option = old_option | O_NONBLOCK;
+    if (fcntl(_listenFd, F_SETFL, new_option) == -1)
+	{
+		Log::LogMsg(ERROR, "fcntl() failed");
+		close(_listenFd);
+		exit(1);
+	}
+}
+
+void	Server::SetListen()
+{
+	if (listen(_listenFd, 10) == -1)
+	{
+		Log::LogMsg(ERROR, "listen() failed");
+		close(_listenFd);
+		exit(1);
+	}
+}
+
+void	Server::SetClientConnection(int connFd)
+{
+	_connFd = connFd;
+}
+
 uint16_t	Server::GetPort() const
 {
 	return _port;
@@ -195,6 +225,11 @@ uint16_t	Server::GetPort() const
 in_addr_t	Server::GetHost() const
 {
 	return _host;
+}
+
+std::string	Server::GetHostStr() const
+{
+	return inet_ntoa(*((struct in_addr*)&_host));
 }
 
 std::string	Server::GetServerName() const
@@ -252,10 +287,15 @@ struct sockaddr_in	Server::GetSockAddr() const
 	return _sockAddr;
 }
 
+int	Server::GetConnFd() const
+{
+	return _connFd;
+}
+
 std::ostream	&operator<<(std::ostream &o, Server const &i)
 {
 	o << "Port: " << i.GetPort() << std::endl;
-	o << "Host: " << i.GetHost() << std::endl;
+	o << "Host: " << i.GetHostStr() << std::endl;
 	o << "ServerName: " << i.GetServerName() << std::endl;
 	o << "Root: " << i.GetRoot() << std::endl;
 	o << "Indexes: ";
@@ -279,5 +319,7 @@ std::ostream	&operator<<(std::ostream &o, Server const &i)
 		o << it->first << " " << it->second << " ";
 	o << std::endl;
 	o << "UploadPath: " << i.GetUploadPath() << std::endl;
+	o << "ListenFd: " << i.GetListenFd() << std::endl;
+	o << "ConnFd: " << i.GetConnFd() << std::endl;
 	return o;
 }
