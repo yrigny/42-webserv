@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/12 20:33:07 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/13 17:07:38 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@ Server::Server()
 	CreateSocket();
 	SetSockAddr();
 	SetReuseAddr();
-	SetNonBlocking();
 	SetBind();
+	SetNonBlocking();
 	SetListen();
 	SetClientConnection(-1);
 }
@@ -215,6 +215,32 @@ void	Server::SetListen()
 void	Server::SetClientConnection(int connFd)
 {
 	_connFd = connFd;
+}
+
+int	Server::HandleRequest(int connFd)
+{
+	char buf[_maxBodySize + 1];
+	memset(buf, 0, _maxBodySize + 1);
+	int bytes = recv(connFd, buf, _maxBodySize, 0);
+	std::cout << "bytes: " << bytes << std::endl;
+	if (bytes > 0)
+	{
+		buf[bytes] = 0;
+		std::cout << buf << std::endl;
+	}
+	else if (bytes == 0)
+	{
+		Log::LogMsg(INFO, "Client disconnected");
+		close(connFd);
+		return -1;
+	}
+	else if (bytes == -1)
+	{
+		Log::LogMsg(ERROR, "recv() failed");
+		close(connFd);
+		return -1;
+	}
+	return 0;
 }
 
 uint16_t	Server::GetPort() const

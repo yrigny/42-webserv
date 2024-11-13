@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:43 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/12 20:15:26 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/13 16:37:56 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,7 @@ class Server
 		void	SetNonBlocking();
 		void	SetListen();
 		void	SetClientConnection(int connFd);
+		int		HandleRequest(int connFd);
 
 	private:
 		uint16_t					_port;

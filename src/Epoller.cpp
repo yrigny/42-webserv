@@ -6,20 +6,20 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/12 20:33:59 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/13 18:03:51 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Epoller.hpp"
 
-Epoller::Epoller(vecServer& servers, int maxEvent) : _epollFd(epoll_create1(0)), _events(maxEvent), _servers(servers)
+Epoller::Epoller(VecServer& servers, int maxEvent) : _epollFd(epoll_create1(0)), _events(maxEvent), _servers(servers)
 {
 	if (_epollFd == -1)
 	{
 		Log::LogMsg(ERROR, "epoll_create1() failed");
 		exit(1);
 	}
-	_serverFds.clear();
+	std::cout << "Epoller created, epollFd: " << _epollFd << std::endl;
 }
 
 Epoller::~Epoller()
@@ -27,9 +27,9 @@ Epoller::~Epoller()
 	close(_epollFd);
 }
 
-void	Epoller::InitEpoller(vecServer& servers)
+void	Epoller::InitEpoller()
 {
-	if (!this->AddServerSockets(servers))
+	if (!this->AddServerSockets())
 	{
 		Log::LogMsg(ERROR, "AddServerSockets() failed");
 		close(_epollFd);
@@ -45,22 +45,23 @@ void	Epoller::InitEpoller(vecServer& servers)
 	while (this->EpollWait(-1) != -1)
 		;
 	Log::LogMsg(INFO, "Stop webserv...");
-	for (size_t i = 0; i < _serverFds.size(); i++)
+	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		close(_serverFds[i]);
-		this->DelFd(_serverFds[i]);
+		this->DelFd(_servers[i].GetListenFd());
+		close(_servers[i].GetListenFd());
+		this->DelFd(_servers[i].GetConnFd());
+		close(_servers[i].GetConnFd());
 	}
 }
 
-bool	Epoller::AddServerSockets(vecServer& servers)
+bool	Epoller::AddServerSockets()
 {
-	for (size_t i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		std::cout << servers[i];
-		if (!AddFd(servers[i].GetListenFd(), EPOLLIN | EPOLLET))
+		std::cout << _servers[i];
+		if (!AddFd(_servers[i].GetListenFd(), EPOLLIN | EPOLLET))
 			return false;
 	}
-	_servers = servers;
 	return true;
 }
 
@@ -71,9 +72,8 @@ bool	Epoller::AddFd(int fd, uint32_t events)
 	struct epoll_event event;
 	event.data.fd = fd;
 	event.events = events;
-	_serverFds.push_back(fd);
-	std::cout << "fd: " << fd << ", events: " << EventToStr(events) << std::endl;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) -1)
+	std::cout << "Add to epoll: Fd: " << fd << ", events: " << EventToStr(events) << std::endl;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) == -1)
 	{
 		Log::LogMsg(ERROR, "epoll_ctl() failed");
 		close(fd);
@@ -114,11 +114,21 @@ bool	Epoller::DelFd(int fd)
 	return true;
 }
 
-int	Epoller::MatchServerFd(int fd)
+int	Epoller::MatchListenFd(int fd)
 {
-	for (size_t i = 0; i < _serverFds.size(); i++)
+	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (_serverFds[i] == fd)
+		if (_servers[i].GetListenFd() == fd)
+			return i;
+	}
+	return -1;
+}
+
+int	Epoller::MatchClientFd(int fd)
+{
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].GetConnFd() == fd)
 			return i;
 	}
 	return -1;
@@ -136,20 +146,21 @@ int		Epoller::EpollWait(int timeoutMs)
 	for (int i = 0; i < nfds; i++)
 	{
 		int sockFd = _events[i].data.fd;
-		if ((_events[i].events & EPOLLERR) || (_events[i].events & EPOLLHUP) || !(_events[i].events & EPOLLIN))
+		if (_events[i].events & (EPOLLERR | EPOLLHUP) || !(_events[i].events & EPOLLIN))
 		{
 			Log::LogMsg(ERROR, "epoll error, events: " + Log::ToString(_events[i].events));
 			close(sockFd);
 			return 0;
 		}
-		int serverIdx = this->MatchServerFd(sockFd);
-		if ((_events[i].events & EPOLLIN) && serverIdx > 0) // new connection
+		int serverIdx = this->MatchListenFd(sockFd);
+		if ((_events[i].events & EPOLLIN) && serverIdx >= 0) // new connection
 		{
 			if (!this->InitConnection(sockFd, serverIdx))
 				return -1;
 		}
 		else // existing connection
 		{
+			serverIdx = this->MatchClientFd(sockFd);
 			if (!this->RequestHandler(sockFd, serverIdx))
 				return -1;
 		}
@@ -198,9 +209,8 @@ bool	Epoller::SetNonBlocking(int connFd)
 
 bool	Epoller::RequestHandler(int connFd, int serverIdx)
 {
-	Log::LogMsg(INFO, "RequestHandler() called");
-	std::cout << "connFd: " << connFd << ", serverIdx: " << serverIdx << std::endl;
-	return true;
+	_servers[serverIdx].HandleRequest(connFd);
+	return false;
 }
 
 int		Epoller::GetEventFd(size_t i) const
