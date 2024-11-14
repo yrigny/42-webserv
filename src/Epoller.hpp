@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:43:32 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/13 17:24:57 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/14 19:05:47 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # include "Log.hpp"
 # include "Server.hpp"
+# include "Client.hpp"
 # include <sys/epoll.h> // epoll_create1, epoll_ctl, epoll_wait
 # include <vector>
 # include <unistd.h> // close
@@ -27,6 +28,7 @@
 
 typedef std::vector<struct epoll_event> VecEvent;
 typedef std::vector<Server> VecServer;
+typedef std::map<int, Client> mapClient;
 
 class Epoller
 {
@@ -53,6 +55,7 @@ class Epoller
 		int 				_epollFd;
 		VecEvent 			_events;
 		VecServer&			_servers;
+		mapClient			_clients;
 };
 
 #endif

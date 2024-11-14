@@ -1,27 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/08 17:27:11 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/14 16:36:09 by yrigny           ###   ########.fr       */
+/*   Created: 2024/11/14 18:46:03 by yrigny            #+#    #+#             */
+/*   Updated: 2024/11/14 18:46:13 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
-#include "Epoller.hpp"
-#include "Log.hpp"
+#include "Client.hpp"
 
-int main()
+Client::Client(int connFd) : _connFd(connFd)
 {
-	Server		server;
-	VecServer 	cluster;
-	cluster.push_back(server);
+}
 
-	Epoller	epoller(cluster);
-	epoller.InitEpoller();
-
-	return 0;
+Client::~Client()
+{
 }

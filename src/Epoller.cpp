@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/13 18:03:51 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/14 16:45:49 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,8 +77,7 @@ bool	Epoller::AddFd(int fd, uint32_t events)
 	{
 		Log::LogMsg(ERROR, "epoll_ctl() failed");
 		close(fd);
-		close(_epollFd);
-		exit(1);
+		return false;
 	}
 	return true;
 }
@@ -94,8 +93,7 @@ bool	Epoller::ModFd(int fd, uint32_t events)
 	{
 		Log::LogMsg(ERROR, "epoll_ctl() failed");
 		close(fd);
-		close(_epollFd);
-		exit(1);
+		return false;
 	}
 	return true;
 }
@@ -108,8 +106,7 @@ bool	Epoller::DelFd(int fd)
 	{
 		Log::LogMsg(ERROR, "epoll_ctl() failed");
 		close(fd);
-		close(_epollFd);
-		exit(1);
+		return false;
 	}
 	return true;
 }
@@ -210,7 +207,7 @@ bool	Epoller::SetNonBlocking(int connFd)
 bool	Epoller::RequestHandler(int connFd, int serverIdx)
 {
 	_servers[serverIdx].HandleRequest(connFd);
-	return false;
+	return false; // stop the program for now cuz the next part is not implemented
 }
 
 int		Epoller::GetEventFd(size_t i) const

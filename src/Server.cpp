@@ -6,15 +6,16 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/13 17:07:38 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/14 17:03:54 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "Log.hpp"
 
-Server::Server()
+Server::Server() // should be connected to the .conf parsing result later
 {
+	/* fill in the attributes of server */
 	SetPort("8080");
 	SetHost("localhost");
 	SetServerName("webserv.fr");
@@ -26,6 +27,7 @@ Server::Server()
 	SetMaxBodySize("4096");
 	SetErrorPages("404 /_default/404.html");
 	SetUploadPath("upload/files/");
+	/* init server */
 	CreateSocket();
 	SetSockAddr();
 	SetReuseAddr();
@@ -222,11 +224,13 @@ int	Server::HandleRequest(int connFd)
 	char buf[_maxBodySize + 1];
 	memset(buf, 0, _maxBodySize + 1);
 	int bytes = recv(connFd, buf, _maxBodySize, 0);
-	std::cout << "bytes: " << bytes << std::endl;
+	std::cout << "number of bytes read: " << bytes << std::endl;
 	if (bytes > 0)
 	{
 		buf[bytes] = 0;
+		std::cout << "----[ request ]----" << std::endl;
 		std::cout << buf << std::endl;
+		std::cout << "-------------------" << std::endl;
 	}
 	else if (bytes == 0)
 	{
@@ -320,6 +324,7 @@ int	Server::GetConnFd() const
 
 std::ostream	&operator<<(std::ostream &o, Server const &i)
 {
+	o << "----[ server info ]----" << std::endl;
 	o << "Port: " << i.GetPort() << std::endl;
 	o << "Host: " << i.GetHostStr() << std::endl;
 	o << "ServerName: " << i.GetServerName() << std::endl;
@@ -347,5 +352,6 @@ std::ostream	&operator<<(std::ostream &o, Server const &i)
 	o << "UploadPath: " << i.GetUploadPath() << std::endl;
 	o << "ListenFd: " << i.GetListenFd() << std::endl;
 	o << "ConnFd: " << i.GetConnFd() << std::endl;
+	o << "-----------------------" << std::endl;
 	return o;
 }
