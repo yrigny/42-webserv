@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/14 17:03:54 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/18 20:02:37 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,59 @@ Server::Server() // should be connected to the .conf parsing result later
 	SetClientConnection(-1);
 }
 
+Server::Server(ServerInfo& serverInfo)
+{
+	SetPort(serverInfo.listen);
+	SetHost(serverInfo.host);
+	SetServerName(serverInfo.serverName);
+	SetRoot(serverInfo.root);
+	SetIndexes(serverInfo.indexes);
+	SetAutoIndex(serverInfo.autoIndex);
+	SetMethods(serverInfo.methods);
+	SetLocations("");
+	SetMaxBodySize(serverInfo.clientMaxBodySize);
+	SetErrorPages(serverInfo.errorPages);
+	SetUploadPath(serverInfo.uploadDir);
+	/* init server */
+	CreateSocket();
+	SetSockAddr();
+	SetReuseAddr();
+	SetBind();
+	SetNonBlocking();
+	SetListen();
+	SetClientConnection(-1);
+}
+
 Server::~Server()
 {
 	close(_listenFd);
+}
+
+Server&	Server::operator=(Server const &rhs)
+{
+	_port = rhs.GetPort();
+	_host = rhs.GetHost();
+	_serverName = rhs.GetServerName();
+	_root = rhs.GetRoot();
+	_indexes = rhs.GetIndexes();
+	_autoIndex = rhs.GetAutoIndex();
+	_methods = rhs.GetMethods();
+	_locations = rhs.GetLocations();
+	_maxBodySize = rhs.GetMaxBodySize();
+	_errorPages = rhs.GetErrorPages();
+	_uploadPath = rhs.GetUploadPath();
+	_listenFd = rhs.GetListenFd();
+	_sockAddr = rhs.GetSockAddr();
+	_connFd = rhs.GetConnFd();
+	/* init server */
+	CreateSocket();
+	SetSockAddr();
+	SetReuseAddr();
+	SetBind();
+	SetNonBlocking();
+	SetListen();
+	SetClientConnection(-1);
+	return *this;
 }
 
 void	Server::SetPort(std::string port)
@@ -184,6 +234,7 @@ void	Server::SetReuseAddr()
 
 void	Server::SetBind()
 {
+	cout << "Binding Fd " << _listenFd << " with port " << _port << " host " << inet_ntoa(*((struct in_addr*)&_host)) << endl;
 	if (bind(_listenFd, (struct sockaddr*)&_sockAddr, sizeof(_sockAddr)) == -1)
 	{
 		Log::LogMsg(ERROR, "bind() failed");

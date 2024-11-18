@@ -6,14 +6,14 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:43 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/13 16:37:56 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/18 18:55:21 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "Config.hpp"
+# include "Conf.hpp"
 # include <iostream>
 # include <ostream>
 # include <netinet/in.h> // sockaddr_in
@@ -25,31 +25,15 @@
 # include <string> // stoi
 # include <vector>
 # include <map>
-
-enum HttpMethod
-{
-	GET,
-	POST,
-	DELETE,
-};
-
-typedef struct s_location
-{
-	std::string 				_path;
-	std::string 				_root;
-	std::string 				_index;
-	bool 						_autoIndex;
-	std::vector<std::string>	_cgiExtension;
-	std::vector<std::string>	_cgiBin;
-	std::vector<HttpMethod>		_methods;
-	std::string 				_redir;
-}	Location;
+using namespace std;
 
 class Server
 {
 	public:
 		Server();
+		Server(ServerInfo& serverInfo);
 		~Server();
+		Server&	operator=(Server const &rhs);
 
 		void	SetPort(std::string port);
 		void	SetHost(std::string host);
@@ -109,6 +93,8 @@ class Server
 		struct sockaddr_in			_sockAddr;
 		int 						_connFd;
 };
+
+typedef std::vector<Server> VecServer;
 
 std::ostream &operator<<(std::ostream &o, Server const &i);
 
