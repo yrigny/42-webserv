@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/18 20:02:37 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 12:12:19 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,14 +27,6 @@ Server::Server() // should be connected to the .conf parsing result later
 	SetMaxBodySize("4096");
 	SetErrorPages("404 /_default/404.html");
 	SetUploadPath("upload/files/");
-	/* init server */
-	CreateSocket();
-	SetSockAddr();
-	SetReuseAddr();
-	SetBind();
-	SetNonBlocking();
-	SetListen();
-	SetClientConnection(-1);
 }
 
 Server::Server(ServerInfo& serverInfo)
@@ -50,19 +42,10 @@ Server::Server(ServerInfo& serverInfo)
 	SetMaxBodySize(serverInfo.clientMaxBodySize);
 	SetErrorPages(serverInfo.errorPages);
 	SetUploadPath(serverInfo.uploadDir);
-	/* init server */
-	CreateSocket();
-	SetSockAddr();
-	SetReuseAddr();
-	SetBind();
-	SetNonBlocking();
-	SetListen();
-	SetClientConnection(-1);
 }
 
 Server::~Server()
 {
-	close(_listenFd);
 }
 
 Server&	Server::operator=(Server const &rhs)
@@ -81,7 +64,11 @@ Server&	Server::operator=(Server const &rhs)
 	_listenFd = rhs.GetListenFd();
 	_sockAddr = rhs.GetSockAddr();
 	_connFd = rhs.GetConnFd();
-	/* init server */
+	return *this;
+}
+
+void	Server::InitServer()
+{
 	CreateSocket();
 	SetSockAddr();
 	SetReuseAddr();
@@ -89,7 +76,6 @@ Server&	Server::operator=(Server const &rhs)
 	SetNonBlocking();
 	SetListen();
 	SetClientConnection(-1);
-	return *this;
 }
 
 void	Server::SetPort(std::string port)
@@ -286,13 +272,11 @@ int	Server::HandleRequest(int connFd)
 	else if (bytes == 0)
 	{
 		Log::LogMsg(INFO, "Client disconnected");
-		close(connFd);
 		return -1;
 	}
 	else if (bytes == -1)
 	{
 		Log::LogMsg(ERROR, "recv() failed");
-		close(connFd);
 		return -1;
 	}
 	return 0;

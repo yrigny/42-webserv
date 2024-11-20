@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/18 20:13:16 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 12:11:48 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,22 +35,22 @@ void	Epoller::InitEpoller()
 		close(_epollFd);
 		exit(1);
 	}
-	// if (!this->AddFd(STDIN_FILENO, EPOLLIN))
-	// {
-	// 	Log::LogMsg(ERROR, "AddFd() failed");
-	// 	close(_epollFd);
-	// 	exit(1);
-	// }
 	Log::LogMsg(INFO, "Start webserv...");
 	while (this->EpollWait(-1) != -1)
 		;
 	Log::LogMsg(INFO, "Stop webserv...");
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		this->DelFd(_servers[i].GetListenFd());
-		close(_servers[i].GetListenFd());
-		this->DelFd(_servers[i].GetConnFd());
-		close(_servers[i].GetConnFd());
+		if (_servers[i].GetListenFd() > 2)
+		{
+			this->DelFd(_servers[i].GetListenFd());
+			close(_servers[i].GetListenFd());
+		}
+		if (_servers[i].GetConnFd() > 2)
+		{
+			this->DelFd(_servers[i].GetConnFd());
+			close(_servers[i].GetConnFd());
+		}
 	}
 }
 
@@ -58,6 +58,7 @@ bool	Epoller::AddServerSockets()
 {
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
+		_servers[i].InitServer();
 		std::cout << _servers[i];
 		if (!AddFd(_servers[i].GetListenFd(), EPOLLIN | EPOLLET))
 			return false;

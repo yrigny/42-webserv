@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:43 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/18 18:55:21 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 11:51:08 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,16 @@ class Server
 		// void	SetReturnURI(std::string returnURI);
 		// void	SetBinPaths(std::string binPaths);
 		// void	SetCgiExtensions(std::string cgiExtensions);
+		void	InitServer();
+		void	CreateSocket();
+		void	SetSockAddr();
+		void	SetReuseAddr();
+		void	SetBind();
+		void	SetNonBlocking();
+		void	SetListen();
+		void	SetClientConnection(int connFd);
+		int		HandleRequest(int connFd);
+		
 		uint16_t					GetPort() const;
 		in_addr_t					GetHost() const;
 		std::string					GetHostStr() const;
@@ -64,15 +74,6 @@ class Server
 		int							GetListenFd() const;
 		struct sockaddr_in			GetSockAddr() const;
 		int							GetConnFd() const;
-		
-		void	CreateSocket();
-		void	SetSockAddr();
-		void	SetReuseAddr();
-		void	SetBind();
-		void	SetNonBlocking();
-		void	SetListen();
-		void	SetClientConnection(int connFd);
-		int		HandleRequest(int connFd);
 
 	private:
 		uint16_t					_port;
