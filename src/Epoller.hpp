@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:43:32 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/18 19:22:04 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 17:18:45 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@
 # include <sstream>
 
 typedef std::vector<struct epoll_event> VecEvent;
-// typedef std::map<int, Client> mapClient;
 
 class Epoller
 {
@@ -44,7 +43,7 @@ class Epoller
 		int			MatchClientFd(int fd);
 		int			EpollWait(int timeoutMs = -1);
 		bool		InitConnection(int sockFd, int serverIdx);
-		bool		RequestHandler(int connFd, int serverIdx);
+		bool		RequestTransfer(int connFd, int serverIdx);
 		bool		SetNonBlocking(int connFd);
 		int			GetEventFd(size_t i) const;
 		uint32_t	GetEvents(size_t i) const;
@@ -54,7 +53,6 @@ class Epoller
 		int 				_epollFd;
 		VecEvent 			_events;
 		VecServer&			_servers;
-		// mapClient			_clients;
 };
 
 #endif

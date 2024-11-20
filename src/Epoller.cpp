@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 12:11:48 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 17:24:05 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,8 @@ bool	Epoller::AddServerSockets()
 		std::cout << _servers[i];
 		if (!AddFd(_servers[i].GetListenFd(), EPOLLIN | EPOLLET))
 			return false;
+		else
+			_servers[i].SetEpollFd(_epollFd);
 	}
 	return true;
 }
@@ -159,7 +161,7 @@ int		Epoller::EpollWait(int timeoutMs)
 		else // existing connection
 		{
 			serverIdx = this->MatchClientFd(sockFd);
-			if (!this->RequestHandler(sockFd, serverIdx))
+			if (!this->RequestTransfer(sockFd, serverIdx))
 				return -1;
 		}
 	}
@@ -205,10 +207,14 @@ bool	Epoller::SetNonBlocking(int connFd)
 	return true;
 }
 
-bool	Epoller::RequestHandler(int connFd, int serverIdx)
+bool	Epoller::RequestTransfer(int connFd, int serverIdx)
 {
-	_servers[serverIdx].HandleRequest(connFd);
-	return false; // stop the program for now cuz the next part is not implemented
+	int	ret = 0;
+	ret = _servers[serverIdx].HandleRequest(connFd);
+	if (ret == -1)
+		return false; // stop the program for now
+	else
+		return true;
 }
 
 int		Epoller::GetEventFd(size_t i) const

@@ -6,11 +6,12 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 17:27:11 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/18 20:15:06 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 15:42:57 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Conf.hpp"
+#include "Client.hpp"
 #include "Server.hpp"
 #include "Epoller.hpp"
 using namespace std;

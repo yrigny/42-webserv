@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 12:12:19 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/20 17:38:35 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ Server::Server() // should be connected to the .conf parsing result later
 	SetMaxBodySize("4096");
 	SetErrorPages("404 /_default/404.html");
 	SetUploadPath("upload/files/");
+	SetBinPaths("");
+	SetCgiExtensions("");
 }
 
 Server::Server(ServerInfo& serverInfo)
@@ -42,6 +44,8 @@ Server::Server(ServerInfo& serverInfo)
 	SetMaxBodySize(serverInfo.clientMaxBodySize);
 	SetErrorPages(serverInfo.errorPages);
 	SetUploadPath(serverInfo.uploadDir);
+	SetBinPaths(serverInfo.cgiBin);
+	SetCgiExtensions(serverInfo.cgiExtension);
 }
 
 Server::~Server()
@@ -64,6 +68,8 @@ Server&	Server::operator=(Server const &rhs)
 	_listenFd = rhs.GetListenFd();
 	_sockAddr = rhs.GetSockAddr();
 	_connFd = rhs.GetConnFd();
+	_binPaths = rhs.GetBinPaths();
+	_cgiExtensions = rhs.GetCgiExtensions();
 	return *this;
 }
 
@@ -76,9 +82,10 @@ void	Server::InitServer()
 	SetNonBlocking();
 	SetListen();
 	SetClientConnection(-1);
+	SetEpollFd(-1);
 }
 
-void	Server::SetPort(std::string port)
+void	Server::SetPort(const std::string& port)
 {
 	_port = static_cast<uint16_t>(strtol(port.c_str(), NULL, 10));
 }
@@ -90,12 +97,12 @@ void	Server::SetHost(std::string host)
 	_host = inet_addr(host.c_str());
 }
 
-void	Server::SetServerName(std::string serverName)
+void	Server::SetServerName(const std::string& serverName)
 {
 	_serverName = serverName;
 }
 
-void	Server::SetRoot(std::string root)
+void	Server::SetRoot(const std::string& root)
 {
 	_root = root;
 }
@@ -111,7 +118,7 @@ void	Server::SetIndexes(std::string indexes)
 		_indexes.push_back(indexes);
 }
 
-void	Server::SetAutoIndex(std::string autoIndex)
+void	Server::SetAutoIndex(const std::string& autoIndex)
 {
 	if (autoIndex != "on" && autoIndex != "off")
 	{
@@ -161,13 +168,13 @@ void	Server::SetMethods(std::string methods_str)
 	}
 }
 
-void	Server::SetLocations(std::string locations)
+void	Server::SetLocations(const std::string& locations)
 {
 	(void)locations;
 	_locations.clear();
 }
 
-void	Server::SetMaxBodySize(std::string maxBodySize)
+void	Server::SetMaxBodySize(const std::string& maxBodySize)
 {
 	_maxBodySize = static_cast<unsigned int>(strtol(maxBodySize.c_str(), NULL, 10));
 }
@@ -184,9 +191,19 @@ void	Server::SetErrorPages(std::string errorPages)
 	}
 }
 
-void	Server::SetUploadPath(std::string uploadPath)
+void	Server::SetUploadPath(const std::string& uploadPath)
 {
 	_uploadPath = uploadPath;
+}
+
+void	Server::SetBinPaths(const std::string& binPaths)
+{
+	_binPaths = binPaths;
+}
+
+void	Server::SetCgiExtensions(const std::string& cgiExtensions)
+{
+	_cgiExtensions = cgiExtensions;
 }
 
 void	Server::CreateSocket()
@@ -256,10 +273,20 @@ void	Server::SetClientConnection(int connFd)
 	_connFd = connFd;
 }
 
+void	Server::SetEpollFd(int epollFd)
+{
+	_epollFd = epollFd;
+}
+
 int	Server::HandleRequest(int connFd)
 {
 	char buf[_maxBodySize + 1];
 	memset(buf, 0, _maxBodySize + 1);
+
+	if (!IsConnectedClient(connFd))
+		AddClient(connFd);
+	Client& client = _clients[connFd];
+	
 	int bytes = recv(connFd, buf, _maxBodySize, 0);
 	std::cout << "number of bytes read: " << bytes << std::endl;
 	if (bytes > 0)
@@ -268,6 +295,17 @@ int	Server::HandleRequest(int connFd)
 		std::cout << "----[ request ]----" << std::endl;
 		std::cout << buf << std::endl;
 		std::cout << "-------------------" << std::endl;
+		ReqStatus check = client.RecvRequest(std::string(buf));
+		if (check == REQ_COMPLETE)
+		{
+			ProcessRequest(client); // bool, can return a status if needed
+			return -1;
+		}
+		if (check == REQ_INCOMPLETE) // keep reading
+			return 0;
+		if (check == REQ_BODY_TOO_LARGE)
+			// Handle Request with Error 413, close connection
+			return 0;
 	}
 	else if (bytes == 0)
 	{
@@ -280,6 +318,52 @@ int	Server::HandleRequest(int connFd)
 		return -1;
 	}
 	return 0;
+}
+
+bool	Server::IsConnectedClient(int connFd)
+{
+	if (_clients.find(connFd) == _clients.end())
+		return false;
+	return true;
+}
+
+void	Server::AddClient(int connFd)
+{
+	_clients[connFd] = Client(connFd);
+}
+
+bool	Server::ProcessRequest(Client& client)
+{
+	// parse request
+
+
+	// prepare the response
+	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello World!";
+	// write the response to connFd
+	if (send(client.GetConnFd(), response.c_str(), response.size(), 0) == -1)
+	{
+		Log::LogMsg(ERROR, "send() failed");
+		close(client.GetConnFd());
+		return false;
+	}
+	// send the response
+	if (!ModEpoll(client.GetConnFd(), EPOLLOUT))
+		return false;
+	return true;
+}
+
+bool	Server::ModEpoll(int connFd, uint32_t events)
+{
+	struct epoll_event event;
+	event.data.fd = connFd;
+	event.events = events;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, connFd, &event) == -1)
+	{
+		Log::LogMsg(ERROR, "epoll_ctl() failed");
+		close(connFd);
+		return false;
+	}
+	return true;
 }
 
 uint16_t	Server::GetPort() const
@@ -342,6 +426,16 @@ std::string	Server::GetUploadPath() const
 	return _uploadPath;
 }
 
+std::string	Server::GetBinPaths() const
+{
+	return _binPaths;
+}
+
+std::string	Server::GetCgiExtensions() const
+{
+	return _cgiExtensions;
+}
+
 int	Server::GetListenFd() const
 {
 	return _listenFd;
@@ -350,6 +444,11 @@ int	Server::GetListenFd() const
 struct sockaddr_in	Server::GetSockAddr() const
 {
 	return _sockAddr;
+}
+
+int	Server::GetEpollFd() const
+{
+	return _epollFd;
 }
 
 int	Server::GetConnFd() const
