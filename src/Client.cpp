@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:46:03 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/21 11:46:32 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/21 18:01:45 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,10 @@ bool	Client::IsCompleteRequest()
 		{
 			std::string contentLength = header.substr(header.find("Content-Length") + 16);
 			contentLength = contentLength.substr(0, contentLength.find("\r\n"));
-			if (body.size() == (size_t)strtol(contentLength.c_str(), NULL, 10))
+			long contentLengthInt = strtol(contentLength.c_str(), NULL, 10);
+			cout << "contentLengthInt: " << contentLengthInt << endl;
+			cout << "body.size(): " << body.size() << endl;
+			if (static_cast<size_t>(contentLengthInt) == body.size())
 				return true;
 		}
 		// if the header contains Transfer-Encoding: chunked

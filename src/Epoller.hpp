@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:43:32 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 17:18:45 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/21 17:20:07 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 # include <string>
 # include <sstream>
 
+extern bool	run;
+
 typedef std::vector<struct epoll_event> VecEvent;
 
 class Epoller
@@ -42,6 +44,7 @@ class Epoller
 		int			MatchListenFd(int fd);
 		int			MatchClientFd(int fd);
 		int			EpollWait(int timeoutMs = -1);
+		void		SafeExit();
 		bool		InitConnection(int sockFd, int serverIdx);
 		bool		RequestTransfer(int connFd, int serverIdx);
 		bool		SetNonBlocking(int connFd);

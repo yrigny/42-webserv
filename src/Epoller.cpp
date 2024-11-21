@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 17:24:05 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/21 17:40:38 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,22 +36,23 @@ void	Epoller::InitEpoller()
 		exit(1);
 	}
 	Log::LogMsg(INFO, "Start webserv...");
-	while (this->EpollWait(-1) != -1)
+	while (run && this->EpollWait(-1) != -1)
 		;
 	Log::LogMsg(INFO, "Stop webserv...");
-	for (size_t i = 0; i < _servers.size(); i++)
-	{
-		if (_servers[i].GetListenFd() > 2)
-		{
-			this->DelFd(_servers[i].GetListenFd());
-			close(_servers[i].GetListenFd());
-		}
-		if (_servers[i].GetConnFd() > 2)
-		{
-			this->DelFd(_servers[i].GetConnFd());
-			close(_servers[i].GetConnFd());
-		}
-	}
+	this->SafeExit();
+	// for (size_t i = 0; i < _servers.size(); i++)
+	// {
+	// 	if (_servers[i].GetListenFd() > 2)
+	// 	{
+	// 		this->DelFd(_servers[i].GetListenFd());
+	// 		close(_servers[i].GetListenFd());
+	// 	}
+	// 	if (_servers[i].GetConnFd() > 2)
+	// 	{
+	// 		this->DelFd(_servers[i].GetConnFd());
+	// 		close(_servers[i].GetConnFd());
+	// 	}
+	// }
 }
 
 bool	Epoller::AddServerSockets()
@@ -140,7 +141,8 @@ int		Epoller::EpollWait(int timeoutMs)
 
 	if ((nfds = epoll_wait(_epollFd, &_events[0], static_cast<int>(_events.size()), timeoutMs)) == -1)
 	{
-		Log::LogMsg(ERROR, "epoll_wait() failed");
+		if (run)
+			Log::LogMsg(ERROR, "epoll_wait() failed");
 		return -1;
 	}
 	for (int i = 0; i < nfds; i++)
@@ -166,6 +168,23 @@ int		Epoller::EpollWait(int timeoutMs)
 		}
 	}
 	return 0;
+}
+
+void	Epoller::SafeExit()
+{
+	for (size_t i = 0; i < _servers.size(); i++)
+	{
+		if (_servers[i].GetListenFd() > 2)
+		{
+			this->DelFd(_servers[i].GetListenFd());
+			close(_servers[i].GetListenFd());
+		}
+		if (_servers[i].GetConnFd() > 2)
+		{
+			this->DelFd(_servers[i].GetConnFd());
+			close(_servers[i].GetConnFd());
+		}
+	}
 }
 
 bool	Epoller::InitConnection(int sockFd, int serverIdx)
