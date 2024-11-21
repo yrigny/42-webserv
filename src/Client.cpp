@@ -6,21 +6,23 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:46:03 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 16:54:04 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/21 11:46:32 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
-Client::Client() : _connFd(-1), _requestStr("")
+Client::Client() : _server(NULL), _connFd(-1), _requestStr("")
 {
 }
 
-Client::Client(int connFd) : _connFd(connFd), _requestStr("")
+Client::Client(Server* server, int connFd) : 
+	_server(server), _connFd(connFd), _requestStr("")
 {
 }
 
-Client::Client(const Client& src) : _connFd(src._connFd), _requestStr(src._requestStr)
+Client::Client(const Client& src) : 
+	_server(src._server), _connFd(src._connFd), _requestStr(src._requestStr)
 {
 }
 
@@ -30,6 +32,7 @@ Client::~Client()
 
 Client&	Client::operator=(const Client& rhs)
 {
+	_server = rhs._server;
 	_connFd = rhs._connFd;
 	_requestStr = rhs._requestStr;
 	return *this;
@@ -42,7 +45,7 @@ ReqStatus	Client::RecvRequest(string request)
 		return REQ_INCOMPLETE;
 	if (BodyTooLarge())
 		return REQ_BODY_TOO_LARGE;
-	return REQ_OK;
+	return REQ_COMPLETE;
 }
 
 bool	Client::IsCompleteRequest()
@@ -80,7 +83,7 @@ bool	Client::BodyTooLarge()
 {
 	std::string header = _requestStr.substr(0, _requestStr.find("\r\n\r\n"));
 	std::string body = _requestStr.substr(_requestStr.find("\r\n\r\n") + 4);
-	if (body.size() > 4096)
+	if (body.size() > _server->GetMaxBodySize())
 		return true;
 	return false;
 }

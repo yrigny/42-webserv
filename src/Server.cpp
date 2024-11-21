@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 17:38:35 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/21 11:47:36 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -329,7 +329,7 @@ bool	Server::IsConnectedClient(int connFd)
 
 void	Server::AddClient(int connFd)
 {
-	_clients[connFd] = Client(connFd);
+	_clients[connFd] = Client(this, connFd);
 }
 
 bool	Server::ProcessRequest(Client& client)
@@ -339,6 +339,9 @@ bool	Server::ProcessRequest(Client& client)
 
 	// prepare the response
 	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello World!";
+	// set the events to EPOLLOUT
+	if (!ModEpoll(client.GetConnFd(), EPOLLOUT))
+		return false;
 	// write the response to connFd
 	if (send(client.GetConnFd(), response.c_str(), response.size(), 0) == -1)
 	{
@@ -346,9 +349,6 @@ bool	Server::ProcessRequest(Client& client)
 		close(client.GetConnFd());
 		return false;
 	}
-	// send the response
-	if (!ModEpoll(client.GetConnFd(), EPOLLOUT))
-		return false;
 	return true;
 }
 
