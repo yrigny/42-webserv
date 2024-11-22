@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/21 17:40:38 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/22 18:14:55 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,15 +175,9 @@ void	Epoller::SafeExit()
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
 		if (_servers[i].GetListenFd() > 2)
-		{
-			this->DelFd(_servers[i].GetListenFd());
 			close(_servers[i].GetListenFd());
-		}
 		if (_servers[i].GetConnFd() > 2)
-		{
-			this->DelFd(_servers[i].GetConnFd());
 			close(_servers[i].GetConnFd());
-		}
 	}
 }
 

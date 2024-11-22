@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/21 16:22:16 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/22 19:59:03 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -299,13 +299,19 @@ int	Server::HandleRequest(int connFd)
 		if (check == REQ_COMPLETE)
 		{
 			ProcessRequest(client); // bool, can return a status if needed
-			return -1;
+			return 0;
 		}
 		if (check == REQ_INCOMPLETE) // keep reading
 			return 0;
 		if (check == REQ_BODY_TOO_LARGE)
-			// Handle Request with Error 413, close connection
+		{
+			// stop reading the connfd, send 413
+			
+			// close the connection
+			close(connFd);
+			_clients.erase(connFd);
 			return 0;
+		}
 	}
 	else if (bytes == 0)
 	{
@@ -335,10 +341,16 @@ void	Server::AddClient(int connFd)
 bool	Server::ProcessRequest(Client& client)
 {
 	// parse request
-
-
+	cout << "Parsing request" << endl;
+	client.ParseRequest();
 	// prepare the response
-	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello World!";
+	cout << "Preparing response" << endl;
+	client.SearchLocation();
+	client.PrepareResponse();
+	// std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello World!";
+	std::string& response = client.GetResponse();
+	std::cout << "----[ response ]----"<< std::endl;
+	std::cout << response << std::endl;
 	// set the events to EPOLLOUT
 	if (!ModEpoll(client.GetConnFd(), EPOLLOUT))
 		return false;
@@ -349,6 +361,9 @@ bool	Server::ProcessRequest(Client& client)
 		close(client.GetConnFd());
 		return false;
 	}
+	// set the events to EPOLLIN
+	if (!ModEpoll(client.GetConnFd(), EPOLLIN))
+		return false;
 	return true;
 }
 

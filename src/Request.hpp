@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 13:56:39 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 15:21:28 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/22 17:11:50 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,27 @@ typedef struct s_header
 
 class Request
 {
+	public:
+		Request();
+		~Request();
+
+		void	SetMethod(string method);
+		void	SetUri(string uri);
+		void	SetVersion(string version);
+		void	SetHeaderField(string field, string value);
+		void	SetBody(string body);
+		string	GetMethod() const;
+		string	GetUri() const;
+		string	GetVersion() const;
+		string*	GetBody() const;
+		string	GetHeaderField(string field) const;
+
 	private:
-		// int		_fd;
-		// string	_request;
-		// Header	_header;
+		string	_method;
+		string	_uri;
+		string	_version;
+		Header	_header;
+		string	_body;
 };
 
 #endif

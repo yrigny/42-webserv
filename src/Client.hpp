@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 18:42:57 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/21 11:48:36 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/22 19:29:00 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 # include "Log.hpp"
 # include "Server.hpp"
 # include "Request.hpp"
+# include "Response.hpp"
 # include <map>
 using namespace std;
 
@@ -26,6 +27,8 @@ enum ReqStatus
 };
 
 class Server;
+class Request;
+class Response;
 
 class Client
 {
@@ -39,14 +42,21 @@ class Client
 		ReqStatus	RecvRequest(string request);
 		bool		IsCompleteRequest();
 		bool		BodyTooLarge();
+		void		ParseRequest();
+		void		SearchLocation();
+		void		PrepareResponse();
 
 		int			GetConnFd() const;
 		string&		GetRequestStr();
+		string&		GetResponse();
 		
 	private:
 		Server*		_server;
 		int			_connFd;
 		std::string	_requestStr;
+		Request*	_request;
+		int			_statusCode;
+		Response*	_response;
 };
 
 

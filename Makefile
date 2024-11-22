@@ -2,7 +2,7 @@ CC = c++
 
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC_FILES = main Conf Client Server Epoller Log 
+SRC_FILES = main Conf Client Server Epoller Log Request Response
 
 SRC_DIR = ./src/
 
