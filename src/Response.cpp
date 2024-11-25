@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 18:19:08 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 19:53:52 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:24:25 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,15 +25,24 @@ void Response::InitializeStatusCodes() {
     statusCodes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response()
+Response::Response() :
+	_statusCode(""),
+	_statusMessage(""),
+	_contentType(""),
+	_serverName(""),
+	_contentLen(""),
+	_connection(""),
+	_body(""),
+	_response("")
 {
+	InitializeStatusCodes();
 }
 
 Response::~Response()
 {
 }
 
-void	Response::SetStatusCode(int code)
+void	Response::SetStatusCode(const string& code)
 {
 	_statusCode = code;
 }
@@ -46,6 +55,23 @@ void	Response::SetStatusMessage()
 void	Response::SetServerName(const string& serverName)
 {
 	_serverName = serverName;
+}
+
+void	Response::SetContentType(const string& path)
+{
+	cout << "static file path: " << path << endl;
+	if (path.find(".html") != string::npos || path.find(".htm") != string::npos)
+		_contentType = "text/html";
+	if (path.find(".jpg") != string::npos)
+		_contentType = "image/jpeg";
+	if (path.find(".png") != string::npos)
+		_contentType = "image/png";
+	if (path.find(".gif") != string::npos)
+		_contentType = "image/gif";
+	if (path.find(".css") != string::npos)
+		_contentType = "text/css";
+	if (path.find(".js") != string::npos)
+		_contentType = "text/javascript";
 }
 
 void	Response::SetConnection(const string& connection)
@@ -73,19 +99,25 @@ void	Response::SetResponse(const string& response)
 void	Response::ResembleResponse()
 {
 	_response = "HTTP/1.1 " + _statusCode + " " + _statusMessage + "\r\n";
+	_response += "Content-Type: " + _contentType + "\r\n";
 	_response += "Server: " + _serverName + "\r\n";
 	_response += "Connection: " + _connection + "\r\n";
 	_response += "Content-Length: " + _contentLen + "\r\n";
 	_response += "\r\n";
 	_response += _body;
-	cout << "----[ response ]----" << endl;
-	cout << _response << endl;
-	cout << "--------------------" << endl;
+	// cout << "----[ response ]----" << endl;
+	// cout << _response << endl;
+	// cout << "--------------------" << endl;
 }
 
 string	Response::GetStatusCode() const
 {
 	return _statusCode;
+}
+
+string	Response::GetContentType() const
+{
+	return _contentType;
 }
 
 string	Response::GetBody() const

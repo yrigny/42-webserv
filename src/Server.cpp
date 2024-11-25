@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 19:59:03 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:42:36 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,10 +109,10 @@ void	Server::SetRoot(const std::string& root)
 
 void	Server::SetIndexes(std::string indexes)
 {
-	while (indexes.find(" ") != std::string::npos)
+	while (indexes.find(",") != std::string::npos)
 	{
-		_indexes.push_back(indexes.substr(0, indexes.find(" ")));
-		indexes = indexes.substr(indexes.find(" ") + 1);
+		_indexes.push_back(indexes.substr(0, indexes.find(",")));
+		indexes = indexes.substr(indexes.find(", ") + 2);
 	}
 	if (indexes[0])
 		_indexes.push_back(indexes);
@@ -340,17 +340,13 @@ void	Server::AddClient(int connFd)
 
 bool	Server::ProcessRequest(Client& client)
 {
-	// parse request
-	cout << "Parsing request" << endl;
 	client.ParseRequest();
-	// prepare the response
-	cout << "Preparing response" << endl;
 	client.SearchLocation();
 	client.PrepareResponse();
-	// std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello World!";
 	std::string& response = client.GetResponse();
-	std::cout << "----[ response ]----"<< std::endl;
-	std::cout << response << std::endl;
+	// std::cout << "----[ response ]----"<< std::endl;
+	// std::cout << response << std::endl;
+	// std::cout << "--------------------"<< std::endl;
 	// set the events to EPOLLOUT
 	if (!ModEpoll(client.GetConnFd(), EPOLLOUT))
 		return false;
@@ -361,6 +357,8 @@ bool	Server::ProcessRequest(Client& client)
 		close(client.GetConnFd());
 		return false;
 	}
+	// clear the client request history
+	client.Reset();
 	// set the events to EPOLLIN
 	if (!ModEpoll(client.GetConnFd(), EPOLLIN))
 		return false;

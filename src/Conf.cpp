@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 13:36:33 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/21 12:31:39 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:19:33 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,7 +249,7 @@ void	Conf::_ParseLine(string line, ServerInfo *serverInfo)
 		serverInfo->clientMaxBodySize = value;
 	else if (key.compare("root") == 0)
 		serverInfo->root = value;
-	else if (key.compare("error_pages") == 0)
+	else if (key.compare("error_page") == 0)
 		serverInfo->errorPages = value;
 	else if (key.compare("index") == 0)
 		serverInfo->indexes = value;

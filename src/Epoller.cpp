@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 18:14:55 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:50:15 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,10 +174,10 @@ void	Epoller::SafeExit()
 {
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (_servers[i].GetListenFd() > 2)
-			close(_servers[i].GetListenFd());
 		if (_servers[i].GetConnFd() > 2)
 			close(_servers[i].GetConnFd());
+		if (_servers[i].GetListenFd() > 2)
+			close(_servers[i].GetListenFd());
 	}
 }
 
@@ -242,7 +242,6 @@ uint32_t	Epoller::GetEvents(size_t i) const
 
 std::string	Epoller::EventToStr(uint32_t events) const
 {
-	// uint32_t events = _events[i].events;
 	std::string str;
 	if (events & EPOLLIN)
 		str += "EPOLLIN ";

@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 14:31:50 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 19:31:00 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:04:20 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,9 @@ class Response
 
 		static	map<string, string> statusCodes;
 		void	InitializeStatusCodes();
-		void	SetStatusCode(int code);
+		void	SetStatusCode(const string& code);
 		void	SetStatusMessage();
+		void	SetContentType(const string& contentType);
 		void	SetServerName(const string& serverName);
 		void	SetConnection(const string& connection);
 		void	SetContentLen(size_t len);
@@ -37,12 +38,14 @@ class Response
 		void	ResembleResponse();
 
 		string	GetStatusCode() const;
+		string	GetContentType() const;
 		string	GetBody() const;
 		string&	GetResponse();
 
 	private:
 		string	_statusCode;
 		string	_statusMessage;
+		string	_contentType;
 		string	_serverName;
 		string	_contentLen;
 		string	_connection;

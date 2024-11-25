@@ -6,27 +6,24 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:46:03 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 19:55:41 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 18:56:32 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
-Client::Client() : _server(NULL), _connFd(-1), _requestStr(""), _request(NULL), _response(NULL)
+Client::Client() : _server(NULL), _connFd(-1), _requestStr(""), _request(NULL), _statusCode(""), _path(""), _response(NULL)
 {
-	cout << "Client default constructor" << endl;
 }
 
 Client::Client(Server* server, int connFd) : 
-	_server(server), _connFd(connFd), _requestStr(""), _request(NULL), _response(NULL)
+	_server(server), _connFd(connFd), _requestStr(""), _request(NULL), _statusCode(""), _path(""), _response(NULL)
 {
-	cout << "Client constructor" << endl;
 }
 
 Client::Client(const Client& src) : 
-	_server(src._server), _connFd(src._connFd), _requestStr(src._requestStr), _request(src._request), _response(src._response)
+	_server(src._server), _connFd(src._connFd), _requestStr(src._requestStr), _request(src._request), _statusCode(src._statusCode), _path(src._path), _response(src._response)
 {
-	cout << "Client copy constructor" << endl;
 }
 
 Client::~Client()
@@ -35,16 +32,16 @@ Client::~Client()
 		delete _request;
 	if (_response)
 		delete _response;
-	cout << "Client destructor" << endl;
 }
 
 Client&	Client::operator=(const Client& rhs)
 {
-	cout << "Client assignment operator" << endl;
 	_server = rhs._server;
 	_connFd = rhs._connFd;
 	_requestStr = rhs._requestStr;
 	_request = rhs._request;
+	_statusCode = rhs._statusCode;
+	_path = rhs._path;
 	_response = rhs._response;
 	return *this;
 }
@@ -99,7 +96,7 @@ bool	Client::BodyTooLarge()
 	std::string body = _requestStr.substr(_requestStr.find("\r\n\r\n") + 4);
 	if (body.size() > _server->GetMaxBodySize())
 	{
-		_statusCode = 413;
+		_statusCode = "413";
 		return true;
 	}
 	return false;
@@ -147,36 +144,34 @@ void	Client::ParseRequest()
 
 void	Client::SearchLocation()
 {
-	// if the request is a GET request
 	if (_request->GetMethod() == "GET")
 	{
 		// if the request is for the root directory
 		if (_request->GetUri() == "/")
-		{
-			_statusCode = 200;
-			return;
-		}
+			_path = _server->GetRoot() + _server->GetIndexes()[0];
 		// if the request is for a file
 		if (_request->GetUri().find(".") != std::string::npos)
-		{
-			_statusCode = 200;
-			return;
-		}
+			_path = "." + _request->GetUri();
 	}
-	// if the request is a POST request
-	if (_request->GetMethod() == "POST")
-	{
-		_statusCode = 200;
-		return;
-	}
-	// if the request is a DELETE request
-	if (_request->GetMethod() == "DELETE")
-	{
-		_statusCode = 200;
-		return;
-	}
+	else if (_request->GetMethod() == "POST")
+		_path = _server->GetUploadPath();
+	else if (_request->GetMethod() == "DELETE")
+		_path = _server->GetRoot() + _request->GetUri();
 	// if the request is not a GET, POST, or DELETE request
-	_statusCode = 405;
+	else
+	{
+		_statusCode = "405";
+		_path = _server->GetErrorPages()[405];
+	}
+	// if the requested resource is not accessible
+	ifstream	file(_path.c_str());
+	if (!file.is_open())
+	{
+		_statusCode = "404";
+		_path = _server->GetErrorPages()[404];
+		return;
+	}
+	file.close();
 }
 
 void	Client::PrepareResponse()
@@ -184,17 +179,44 @@ void	Client::PrepareResponse()
 	_response = new Response();
 	_response->SetStatusCode(_statusCode);
 	_response->SetStatusMessage();
+	_response->SetContentType(_path);
 	_response->SetServerName(_server->GetServerName());
-	_response->SetContentLen(_response->GetBody().size());
-	_response->SetConnection("close");
-	if (_request->GetMethod() == "GET")
-		_response->SetBody("Hello, World!");
+	_response->SetConnection(_request->GetHeaderField("Connection"));
+	if (_request->GetMethod() == "GET" && _response->GetContentType() == "text/html")
+	{
+		std::ifstream file(_path.c_str());
+		std::string line;
+		while (getline(file, line))
+			_response->SetBody(_response->GetBody() + line + "\n");
+		file.close();
+	}
+	if (_request->GetMethod() == "GET" && _response->GetContentType() == "image/jpeg")
+	{
+		std::ifstream file(_path.c_str(), std::ios::binary);
+		std::string line;
+		while (getline(file, line))
+			_response->SetBody(_response->GetBody() + line + "\n");
+		file.close();
+	}
 	if (_request->GetMethod() == "POST")
 		_response->SetBody("POST request received");
 	if (_request->GetMethod() == "DELETE")
 		_response->SetBody("DELETE request received");
 	_response->SetContentLen(_response->GetBody().size());
 	_response->ResembleResponse();
+}
+
+void	Client::Reset()
+{
+	_requestStr = "";
+	if (_request)
+		delete _request;
+	_request = NULL;
+	_statusCode = "";
+	_path = "";
+	if (_response)
+		delete _response;
+	_response = NULL;
 }
 
 int	Client::GetConnFd() const

@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 18:42:57 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/22 19:29:00 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/11/25 17:40:25 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 # include "Request.hpp"
 # include "Response.hpp"
 # include <map>
+# include <fstream>
+
 using namespace std;
 
 enum ReqStatus
@@ -45,6 +47,7 @@ class Client
 		void		ParseRequest();
 		void		SearchLocation();
 		void		PrepareResponse();
+		void		Reset();
 
 		int			GetConnFd() const;
 		string&		GetRequestStr();
@@ -55,7 +58,8 @@ class Client
 		int			_connFd;
 		std::string	_requestStr;
 		Request*	_request;
-		int			_statusCode;
+		string		_statusCode;
+		string		_path;
 		Response*	_response;
 };
 
