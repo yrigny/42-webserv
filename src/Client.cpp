@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:46:03 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/25 18:56:32 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/05 19:10:50 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,6 +171,8 @@ void	Client::SearchLocation()
 		_path = _server->GetErrorPages()[404];
 		return;
 	}
+	else
+		_statusCode = "200";
 	file.close();
 }
 
@@ -208,7 +210,7 @@ void	Client::PrepareResponse()
 
 void	Client::Reset()
 {
-	_requestStr = "";
+	_requestStr.clear();
 	if (_request)
 		delete _request;
 	_request = NULL;

@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 18:19:08 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/25 18:24:25 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/05 19:13:55 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void	Response::SetServerName(const string& serverName)
 
 void	Response::SetContentType(const string& path)
 {
-	cout << "static file path: " << path << endl;
+	cout << "requested resource path: " << path << endl;
 	if (path.find(".html") != string::npos || path.find(".htm") != string::npos)
 		_contentType = "text/html";
 	if (path.find(".jpg") != string::npos)

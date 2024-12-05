@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 10:50:20 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/25 18:50:15 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/05 18:51:51 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,19 +40,6 @@ void	Epoller::InitEpoller()
 		;
 	Log::LogMsg(INFO, "Stop webserv...");
 	this->SafeExit();
-	// for (size_t i = 0; i < _servers.size(); i++)
-	// {
-	// 	if (_servers[i].GetListenFd() > 2)
-	// 	{
-	// 		this->DelFd(_servers[i].GetListenFd());
-	// 		close(_servers[i].GetListenFd());
-	// 	}
-	// 	if (_servers[i].GetConnFd() > 2)
-	// 	{
-	// 		this->DelFd(_servers[i].GetConnFd());
-	// 		close(_servers[i].GetConnFd());
-	// 	}
-	// }
 }
 
 bool	Epoller::AddServerSockets()
@@ -141,7 +128,7 @@ int		Epoller::EpollWait(int timeoutMs)
 
 	if ((nfds = epoll_wait(_epollFd, &_events[0], static_cast<int>(_events.size()), timeoutMs)) == -1)
 	{
-		if (run)
+		if (errno != EINTR)
 			Log::LogMsg(ERROR, "epoll_wait() failed");
 		return -1;
 	}
