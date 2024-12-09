@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/12/05 19:12:18 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/09 14:50:37 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,19 +16,19 @@
 Server::Server() // should be connected to the .conf parsing result later
 {
 	/* fill in the attributes of server */
-	SetPort("8080");
-	SetHost("localhost");
-	SetServerName("webserv.fr");
-	SetRoot("www/_default/");
-	SetIndexes("index.html index.htm index.php");
-	SetAutoIndex("off");
-	SetMethods("GET POST");
-	SetLocations("");
-	SetMaxBodySize("4096");
-	SetErrorPages("404 /_default/404.html");
-	SetUploadPath("upload/files/");
-	SetBinPaths("");
-	SetCgiExtensions("");
+	// SetPort("8080");
+	// SetHost("localhost");
+	// SetServerName("webserv.fr");
+	// SetRoot("www/_default/");
+	// SetIndexes("index.html index.htm index.php");
+	// SetAutoIndex("off");
+	// SetMethods("GET POST");
+	// SetLocations("");
+	// SetMaxBodySize("4096");
+	// SetErrorPages("404 /_default/404.html");
+	// SetUploadPath("upload/files/");
+	// SetBinPaths("");
+	// SetCgiExtensions("");
 }
 
 Server::Server(ServerInfo& serverInfo)
@@ -40,7 +40,7 @@ Server::Server(ServerInfo& serverInfo)
 	SetIndexes(serverInfo.indexes);
 	SetAutoIndex(serverInfo.autoIndex);
 	SetMethods(serverInfo.methods);
-	SetLocations("");
+	SetLocations(serverInfo.locations);
 	SetMaxBodySize(serverInfo.clientMaxBodySize);
 	SetErrorPages(serverInfo.errorPages);
 	SetUploadPath(serverInfo.uploadDir);
@@ -131,69 +131,62 @@ void	Server::SetAutoIndex(const std::string& autoIndex)
 		_autoIndex = false;
 }
 
-void	Server::SetMethods(std::string methods_str)
+void	Server::SetMethods(std::vector<std::string> methods)
 {
-	while (methods_str.find(" ") != std::string::npos)
+	for (size_t i = 0; i < methods.size(); i++)
 	{
-		HttpMethod method;
-		if (methods_str.substr(0, methods_str.find(" ")) == "GET")
-			method = GET;
-		else if (methods_str.substr(0, methods_str.find(" ")) == "POST")
-			method = POST;
-		else if (methods_str.substr(0, methods_str.find(" ")) == "DELETE")
-			method = DELETE;
-		else
-		{
-			Log::LogMsg(ERROR, "Invalid method");
-			exit(1);
-		}
-		_methods.push_back(method);
-		methods_str = methods_str.substr(methods_str.find(" ") + 1);
-	}
-	if (methods_str[0])
-	{
-		HttpMethod method;
-		if (methods_str == "GET")
-			method = GET;
-		else if (methods_str == "POST")
-			method = POST;
-		else if (methods_str == "DELETE")
-			method = DELETE;
-		else
-		{
-			Log::LogMsg(ERROR, "Invalid method");
-			exit(1);
-		}
-		_methods.push_back(method);
+		if (methods[i] == "GET")
+			_methods.push_back(GET);
+		else if (methods[i] == "POST")
+			_methods.push_back(POST);
+		else if (methods[i] == "DELETE")
+			_methods.push_back(DELETE);
 	}
 }
 
-void	Server::SetLocations(const std::string& locations)
+void	Server::SetLocations(const std::vector<Location>& locations)
 {
-	(void)locations;
-	_locations.clear();
+	_locations = locations;
 }
 
 void	Server::SetMaxBodySize(const std::string& maxBodySize)
 {
-	_maxBodySize = static_cast<unsigned int>(strtol(maxBodySize.c_str(), NULL, 10));
+	if (maxBodySize.empty())
+		_maxBodySize = 4096;
+	else
+		_maxBodySize = std::atoi(maxBodySize.c_str());
+	if (_maxBodySize < 0)
+	{
+		Log::LogMsg(ERROR, "Invalid max body size");
+		exit(1);
+	}
 }
 
-void	Server::SetErrorPages(std::string errorPages)
+void	Server::SetErrorPages(std::map<int, std::string> errorPages)
 {
-	while (errorPages.find(" ") != std::string::npos)
+	// check if the error page is valid
+	for (std::map<int, std::string>::iterator it = errorPages.begin(); it != errorPages.end(); it++)
 	{
-		std::string code_str = errorPages.substr(0, errorPages.find(" "));
-		int code = static_cast<int>(strtol(code_str.c_str(), NULL, 10));
-		std::string path = errorPages.substr(errorPages.find(" ") + 1);
-		_errorPages[code] = path;
-		errorPages = errorPages.substr(errorPages.find(" ") + 1);
+		if (it->first < 100 || it->first > 599)
+		{
+			Log::LogMsg(ERROR, "Invalid error code");
+			exit(1);
+		}
 	}
+	_errorPages = errorPages;
 }
 
 void	Server::SetUploadPath(const std::string& uploadPath)
 {
 	_uploadPath = uploadPath;
+}
+
+void	Server::SetReturnURI(const std::string& returnURI)
+{
+	stringstream ss(returnURI);
+	string code, uri;
+	ss >> code >> uri;
+	_returnURI[std::atoi(code.c_str())] = uri;
 }
 
 void	Server::SetBinPaths(const std::string& binPaths)
@@ -240,7 +233,10 @@ void	Server::SetBind()
 	cout << "Binding Fd " << _listenFd << " with port " << _port << " host " << inet_ntoa(*((struct in_addr*)&_host)) << endl;
 	if (bind(_listenFd, (struct sockaddr*)&_sockAddr, sizeof(_sockAddr)) == -1)
 	{
-		Log::LogMsg(ERROR, "bind() failed");
+		if (errno == EADDRINUSE)
+			Log::LogMsg(ERROR, "bind() failed due to port already in use");
+		else
+			Log::LogMsg(ERROR, "bind() failed");
 		close(_listenFd);
 		exit(1);
 	}

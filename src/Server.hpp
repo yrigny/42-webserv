@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:43 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/20 17:31:40 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/09 14:04:03 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,12 +47,12 @@ class Server
 		void	SetRoot(const std::string& root);
 		void	SetIndexes(std::string indexes);
 		void	SetAutoIndex(const std::string& autoIndex);
-		void	SetMethods(std::string methods);
-		void	SetLocations(const std::string& locations);
+		void	SetMethods(std::vector<std::string> methods);
+		void	SetLocations(const std::vector<Location>& locations);
 		void	SetMaxBodySize(const std::string& maxBodySize);
-		void	SetErrorPages(std::string errorPages);
+		void	SetErrorPages(std::map<int, std::string> errorPages);
 		void	SetUploadPath(const std::string& uploadPath);
-		// void	SetReturnURI(const std::string& returnURI);
+		void	SetReturnURI(const std::string& returnURI);
 		void	SetBinPaths(const std::string& binPaths);
 		void	SetCgiExtensions(const std::string& cgiExtensions);
 		void	InitServer();
@@ -101,7 +101,7 @@ class Server
 		unsigned int 				_maxBodySize;
 		std::map<int, std::string>	_errorPages;
 		std::string					_uploadPath;
-		// std::map<int, std::string>	_returnURI;
+		std::map<int, std::string>	_returnURI;
 		std::string					_binPaths;
 		std::string					_cgiExtensions;
 		int 						_listenFd;
