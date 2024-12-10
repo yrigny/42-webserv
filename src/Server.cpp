@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/07 15:16:29 by yrigny            #+#    #+#             */
-/*   Updated: 2024/12/09 14:50:37 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/10 16:07:03 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,7 +284,6 @@ int	Server::HandleRequest(int connFd)
 	Client& client = _clients[connFd];
 	
 	int bytes = recv(connFd, buf, _maxBodySize, 0);
-	std::cout << "number of bytes read: " << bytes << std::endl;
 	if (bytes > 0)
 	{
 		buf[bytes] = 0;
@@ -301,11 +300,10 @@ int	Server::HandleRequest(int connFd)
 			return 0;
 		if (check == REQ_BODY_TOO_LARGE)
 		{
-			// stop reading the connfd, send 413
-			
-			// close the connection
-			close(connFd);
-			_clients.erase(connFd);
+			client.SetStatusCode("413");
+			client.SetError(true);
+			client.SetPath(_errorPages[413]);
+			ProcessRequest(client);
 			return 0;
 		}
 	}
@@ -336,8 +334,10 @@ void	Server::AddClient(int connFd)
 
 bool	Server::ProcessRequest(Client& client)
 {
-	client.ParseRequest();
-	client.SearchLocation();
+	if (!client.GetError())
+		client.ParseRequest();
+	if (!client.GetError())
+		client.SearchResource();
 	client.PrepareResponse();
 	std::string& response = client.GetResponse();
 	// std::cout << "----[ response ]----"<< std::endl;

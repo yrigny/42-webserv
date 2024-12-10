@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 13:36:33 by yrigny            #+#    #+#             */
-/*   Updated: 2024/12/09 15:14:30 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/10 17:55:02 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,16 +234,26 @@ void	Conf::_ParseLine(string line, ServerInfo *serverInfo)
 	else if (key.compare("client_max_body_size") == 0)
 		serverInfo->clientMaxBodySize = value;
 	else if (key.compare("root") == 0)
+	{
+		if (value[value.size() - 1] != '/')
+			value += '/';
 		serverInfo->root = value;
+	}
 	else if (key.compare("error_page") == 0)
 	{
 		istringstream iss(value);
 		string code, path;
 		iss >> code >> path;
+		if (path[0] == '/')
+			path = path.substr(1);
 		serverInfo->errorPages[std::atoi(code.c_str())] = path;
 	}
 	else if (key.compare("index") == 0)
+	{
+		if (value[0] == '/')
+			value = value.substr(1);
 		serverInfo->indexes = value;
+	}
 	else if (key.compare("autoindex") == 0)
 		serverInfo->autoIndex = value;
 	else if (key.compare("upload_path") == 0)
@@ -284,7 +294,7 @@ void	Conf::_ParseLocationLine(string line, Location *location)
 		throw std::invalid_argument("Invalid line");
 	// parse the key-value pair
 	string key = tokens[0];
-	if (key.compare("root") == 0)
+	if (key.compare("root") == 0 && tokens.size() == 2)
 	{
 		if (!IsDirectory(tokens[1]))
 			throw std::invalid_argument("Invalid root directory");
@@ -294,24 +304,27 @@ void	Conf::_ParseLocationLine(string line, Location *location)
 	}
 	else if (key.compare("index") == 0)
 	{
+		if (tokens[1][0] == '/')
+			tokens[1] = tokens[1].substr(1);
 		string fullPath = location->_root + tokens[1];
+		std::cout << fullPath << std::endl;
 		if (!FileExists(fullPath))
 			throw std::invalid_argument("Invalid index file");
 		location->_index = tokens[1];
 	}
-	else if (key.compare("autoindex") == 0)
+	else if (key.compare("autoindex") == 0 && tokens.size() == 2)
 	{
 		if (tokens[1].compare("on") != 0 && tokens[1].compare("off") != 0)
 			throw std::invalid_argument("Invalid autoindex value");
 		location->_autoIndex = tokens[1] == "on" ? true : false;
 	}
-	else if (key.compare("cgi_bin") == 0)
+	else if (key.compare("cgi_bin") == 0 && tokens.size() == 2)
 	{
 		if (!FileExists(tokens[1]))
 			throw std::invalid_argument("Invalid cgi-bin directory");
 		location->_cgiBin = tokens[1];
 	}
-	else if (key.compare("cgi_extension") == 0)
+	else if (key.compare("cgi_extension") == 0 && tokens.size() == 2)
 	{
 		if (tokens[1].find('.') == string::npos)
 			throw std::invalid_argument("Invalid cgi extension");
@@ -331,23 +344,25 @@ void	Conf::_ParseLocationLine(string line, Location *location)
 				throw std::invalid_argument("Invalid method");
 		}
 	}
-	else if (key.compare("upload_path") == 0)
+	else if (key.compare("upload_path") == 0 && tokens.size() == 2)
 	{
 		if (!IsDirectory(tokens[1]))
 			throw std::invalid_argument("Invalid upload directory");
 		location->_uploadPath = tokens[1];
 	}
-	else if (key.compare("error_page") == 0)
+	else if (key.compare("error_page") == 0 && tokens.size() == 3)
 	{
 		int code = std::atoi(tokens[1].c_str());
 		if (code < 400 || code > 599)
 			throw std::invalid_argument("Invalid error code");
+		if (tokens[2][0] == '/')
+			tokens[2] = tokens[2].substr(1);
 		string fullPath = location->_root + tokens[2];
 		if (!FileExists(fullPath))
 			throw std::invalid_argument("Invalid error page");
 		location->_errorPages[code] = tokens[2];
 	}
-	else if (key.compare("return") == 0)
+	else if (key.compare("return") == 0 && tokens.size() == 3)
 	{
 		int code = std::atoi(tokens[1].c_str());
 		if (code < 300 || code > 399)

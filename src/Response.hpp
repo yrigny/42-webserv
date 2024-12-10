@@ -6,7 +6,7 @@
 /*   By: yrigny <yrigny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 14:31:50 by yrigny            #+#    #+#             */
-/*   Updated: 2024/11/25 18:04:20 by yrigny           ###   ########.fr       */
+/*   Updated: 2024/12/10 16:24:36 by yrigny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,9 @@ class Response
 		~Response();
 
 		static	map<string, string> statusCodes;
+		static	map<string, string> mimeTypes;
 		void	InitializeStatusCodes();
+		void	InitializeMimeTypes();
 		void	SetStatusCode(const string& code);
 		void	SetStatusMessage();
 		void	SetContentType(const string& contentType);
